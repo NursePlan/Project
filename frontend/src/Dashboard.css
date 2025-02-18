@@ -1,0 +1,277 @@
+/* Contenitore generale */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Header con titolo */
+header {
+    background-color: #3498db;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    font-size: 24px;
+}
+
+/* Header migliorato */
+.dashboard-header {
+    background: linear-gradient(135deg, #3498db, #2c3e50);
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+    font-size: 26px;
+    font-weight: bold;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    position: relative;
+}
+
+/* Nome utente evidenziato */
+.dashboard-header .username {
+    font-weight: bold;
+    color: #f1c40f;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Sottotitolo */
+.dashboard-header .subtitle {
+    font-size: 18px;
+    font-weight: normal;
+    margin-top: 8px;
+    opacity: 0.9;
+}
+
+/* Layout con sidebar */
+.dashboard-content {
+    display: flex;
+    flex: 1;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #2c3e50;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Stile pulsanti sidebar */
+.sidebar button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.sidebar button:hover {
+    background-color: #2980b9;
+}
+
+/* Contenuto principale */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    font-size: 18px;
+}
+
+/* Pannello registrazione */
+.register-panel {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 400px;
+    margin: auto;
+}
+
+.success-message {
+    color: green;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.error-message {
+    color: red;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* Pulsante Registra - Applica solo ai pulsanti che NON sono "Annulla" */
+.register-panel button:not(.cancel-btn) {
+    background-color: #3498db; /* Blu */
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.register-panel button:not(.cancel-btn):hover {
+    background-color: #2980b9;
+}
+
+/* Pulsante Annulla - Ora di colore rosso */
+.cancel-btn {
+    background-color: #e74c3c !important; /* Forza il colore rosso */
+    color: white !important;
+    border: none !important;
+    padding: 12px !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    border-radius: 5px !important;
+    transition: background 0.3s !important;
+    margin-top: 10px !important;
+}
+
+/* Cambio colore quando il mouse è sopra */
+.cancel-btn:hover {
+    background-color: #c0392b !important; /* Rosso più scuro */
+}
+
+/* Pulsante di eliminazione */
+.delete-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #e74c3c; /* Rosso */
+    transition: color 0.3s;
+}
+
+.delete-btn:hover {
+    color: #c0392b; /* Rosso più scuro */
+}
+
+/* Riquadro dei messaggi */
+.message-box {
+    width: 250px;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    right: 20px;
+    top: 100px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+/* Quando il messaggio non è presente, nascondi il riquadro */
+.message-box.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+
+/* Messaggio di conferma */
+.message {
+    color: green;
+}
+
+/* Messaggio di errore */
+.message.error {
+    color: red;
+}
+
+/* Contenitore della tabella */
+.user-table {
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+}
+
+/* Stile della tabella */
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+}
+
+/* Intestazione della tabella */
+.styled-table thead {
+    background-color: #3498db;
+    color: white;
+    text-align: left;
+    font-weight: bold;
+}
+
+.styled-table th, .styled-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Riga alternata per migliorare la leggibilità */
+.styled-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Testo centrato per le celle */
+.styled-table td {
+    text-align: left;
+}
+
+/* Nessun dato */
+.no-data {
+    text-align: center;
+    font-weight: bold;
+    color: #888;
+}
+
+/* Stile responsive */
+@media screen and (max-width: 768px) {
+    .styled-table {
+        font-size: 14px;
+    }
+    .styled-table th, .styled-table td {
+        padding: 10px;
+    }
+    .dashboard-header {
+        font-size: 22px;
+        padding: 20px 10px;
+    }
+    .dashboard-header .subtitle {
+        font-size: 16px;
+    }
+    .dashboard-content {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        padding: 10px;
+        flex-direction: row;
+        justify-content: space-around;
+    }
+    .sidebar button {
+        width: auto;
+        padding: 10px 15px;
+    }
+    .register-panel {
+        width: 90%;
+        padding: 20px;
+    }
+}
+
+
