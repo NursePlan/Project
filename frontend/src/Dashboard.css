@@ -141,18 +141,41 @@ header {
     background-color: #c0392b !important; /* Rosso più scuro */
 }
 
-/* Pulsante di eliminazione */
-.delete-btn {
-    background: none;
+/* Azioni */
+/* Contenitore dei pulsanti di azione */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+/* Pulsante Modifica */
+.edit-btn {
+    background-color: #f1c40f; /* Giallo */
     border: none;
-    font-size: 20px;
+    padding: 8px 12px;
+    font-size: 16px;
     cursor: pointer;
-    color: #e74c3c; /* Rosso */
-    transition: color 0.3s;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.edit-btn:hover {
+    background-color: #d4ac0d; /* Giallo scuro */
+}
+/* Pulsante Elimina */
+.delete-btn {
+    background-color: #e74c3c; /* Rosso */
+    border: none;
+    padding: 8px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s;
 }
 
 .delete-btn:hover {
-    color: #c0392b; /* Rosso più scuro */
+    background-color: #c0392b; /* Rosso scuro */
 }
 
 /* Riquadro dei messaggi */
@@ -201,6 +224,7 @@ header {
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     overflow-x: auto;
+    max-width: 100%;
 }
 
 /* Stile della tabella */
@@ -208,6 +232,7 @@ header {
     width: 100%;
     border-collapse: collapse;
     font-size: 16px;
+    white-space: nowrap; /* Impedisce la rottura di righe */
 }
 
 /* Intestazione della tabella */
@@ -218,9 +243,11 @@ header {
     font-weight: bold;
 }
 
+/* Celle della tabella */
 .styled-table th, .styled-table td {
     padding: 12px;
     border-bottom: 1px solid #ddd;
+    text-align: left;
 }
 
 /* Riga alternata per migliorare la leggibilità */
@@ -231,6 +258,17 @@ header {
 /* Testo centrato per le celle */
 .styled-table td {
     text-align: left;
+    max-width: 200px; /* Imposta una larghezza massima */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Testo troncato con i puntini */
+}
+
+/* Tooltip per mostrare il testo completo */
+.styled-table td:hover {
+    overflow: visible;
+    white-space: normal;
+    word-wrap: break-word;
+    position: relative;
 }
 
 /* Nessun dato */

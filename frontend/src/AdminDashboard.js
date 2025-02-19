@@ -5,125 +5,194 @@ import "./Dashboard.css"; // Stile aggiornato
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const nomeUtente = localStorage.getItem("nome"); // Recupera il nome
-    //const [showRegisterForm, setShowRegisterForm] = useState(false);
-    //const [showUserTable, setShowUserTable] = useState(false); // Controllo per mostrare la tabella utenti
-    const [users, setUsers] = useState([]); // Stato per memorizzare la lista utenti
-    const [activeSection, setActiveSection] = useState(""); // Controlla la sezione attiva
+    const nomeUtente = localStorage.getItem("nome");
+    const [users, setUsers] = useState([]);
+    const [activeSection, setActiveSection] = useState("");
 
     // Stati del form di registrazione
     const [nome, setNome] = useState("");
     const [cognome, setCognome] = useState("");
     const [matricola, setMatricola] = useState("");
     const [email, setEmail] = useState("");
-    const [idlivello, setIdLivello] = useState("");
-    const [idprofilo, setIdProfilo] = useState("");
-    const [iduo, setIdUo] = useState("");
-    const [idruolo, setIdRuolo] = useState(""); // Nuovo stato per il ruolo
-    const [idarea, setIdArea] = useState(""); // Nuovo stato per l'area
-    const [profili, setProfili] = useState([]);
-    const [ruoli, setRuoli] = useState([]); // Stato per memorizzare i ruoli
-    const [aree, setAree] = useState([]); // Stato per memorizzare le aree
     const [password, setPassword] = useState("");
+    const [idlivello, setIdLivello] = useState("");
+    const [idarea, setIdArea] = useState("");
+    const [idruolo, setIdRuolo] = useState("");
+    const [idprofilo, setIdProfilo] = useState("");
+
+    // Stati per caricare aree, ruoli e profili
+    const [aree, setAree] = useState([]);
+    const [ruoli, setRuoli] = useState([]);
+    const [profili, setProfili] = useState([]);
     const [message, setMessage] = useState("");
 
+    // Stati per la pagina modifica utente
+    const [editMode, setEditMode] = useState(false); // Stato per mostrare la scheda modifica
+    const [selectedUser, setSelectedUser] = useState(null); // Utente selezionato per la modifica
+
     useEffect(() => {
-        fetchUsers(); // Carica gli utenti all'avvio
-        axios.get("http://localhost:5000/get-profili").then(res => setProfili(res.data));
-        axios.get("http://localhost:5000/get-ruoli").then(res => setRuoli(res.data));
-        axios.get("http://localhost:5000/get-aree").then(res => setAree(res.data)); // Recupero aree
+        axios.get("http://localhost:5000/get-aree").then(res => setAree(res.data));
+        fetchUsers();
     }, []);
 
-    // per controllare lo stato della scheda aperta
+    // Quando cambia l'area, carichiamo i ruoli associati
+    useEffect(() => {
+        if (idarea) {
+            axios.get(`http://localhost:5000/get-ruoli/${idarea}`)
+                .then(res => setRuoli(res.data))
+                .catch(err => console.error("Errore nel caricamento dei ruoli:", err));
+            setIdRuolo("");
+            setProfili([]);
+        }
+    }, [idarea]);
+
+    // Quando cambia il ruolo, carichiamo i profili associati
+    useEffect(() => {
+        if (idruolo) {
+            axios.get(`http://localhost:5000/get-profili/${idruolo}`)
+                .then(res => setProfili(res.data))
+                .catch(err => console.error("Errore nel caricamento dei profili:", err));
+            setIdProfilo("");
+        }
+    }, [idruolo]);
+
     const openSection = (section) => {
-        setMessage(""); // Resetta il messaggio di avviso quando si cambia sezione
-        setActiveSection((prevSection) => (prevSection === section ? "" : section));
+        setMessage(""); // Resetta il messaggio quando si cambia sezione
+        setActiveSection((prevSection) => {
+            if (prevSection === section) {
+                return ""; // Se la stessa sezione viene cliccata, la chiudiamo
+            } else {
+                if (section === "users") fetchUsers(); // Aggiorna la lista utenti se si apre la sezione utenti
+                return section;
+            }
+        });
     };
 
-    // Funzione per ottenere la lista utenti
     const fetchUsers = async () => {
-        const token = localStorage.getItem("token"); // Recupera il token
+        const token = localStorage.getItem("token"); // Recupera il token salvato
+
+        if (!token) {
+            console.error("❌ Nessun token trovato! Devi fare il login.");
+            return;
+        }
+
         try {
             const response = await axios.get("http://localhost:5000/get-users", {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: { Authorization: `Bearer ${token}` }, // Invia il token nell'header
             });
+            console.log("✅ Risposta dal server:", response.data);
             setUsers(response.data);
         } catch (error) {
-            console.error("Errore nel recupero utenti:", error);
+            console.error("❌ Errore nel recupero utenti:", error);
         }
     };
 
-    // Funzione per registrare un nuovo utente
     const handleRegister = async (e) => {
         e.preventDefault();
-        setMessage("");
-    
+        setMessage(""); // Pulisce il messaggio prima di inviare i dati
+
+        console.log("📤 Tentativo di registrazione...");
+        console.log("📋 Dati inviati:", { nome, cognome, matricola, email, idlivello, idarea, idruolo, idprofilo, password });
+
         const token = localStorage.getItem("token");
-    
-        console.log("📤 Dati inviati:", { nome, cognome, matricola, email, idlivello, idprofilo, idruolo, idarea, password });
-    
+
         try {
             const response = await axios.post("http://localhost:5000/register", {
-                nome,
-                cognome,
-                matricola,
-                email,
-                idlivello,
-                idprofilo,
-                idruolo,
-                idarea,
-                password
+                nome, cognome, matricola, email, idlivello, idarea, idruolo, idprofilo, password
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-    
+
+            console.log("✅ Registrazione avvenuta con successo:", response.data);
             setMessage("✅ Utente inserito correttamente!");
             setNome(""); setCognome(""); setMatricola(""); setEmail("");
-            setIdLivello(""); setIdProfilo(""); setIdRuolo(""); setIdArea(""); setPassword("");
-    
+            setIdLivello(""); setIdArea(""); setIdRuolo(""); setIdProfilo(""); setPassword("");
             fetchUsers(); // Aggiorna la lista utenti
+
+            // Nasconde il messaggio dopo 10 secondi
+            setTimeout(() => setMessage(""), 10000);
+
         } catch (error) {
             console.error("❌ Errore durante la registrazione:", error.response?.data || error);
             setMessage(error.response?.data?.error || "❌ Errore durante la registrazione");
+
+            // Nasconde il messaggio di errore dopo 10 secondi
+            setTimeout(() => setMessage(""), 10000);
         }
     };
-    
 
-    // Funzione per pulire il form quando si annulla
+
     const handleCancel = () => {
-        //setShowRegisterForm(false);
         setMessage("");
         setNome(""); setCognome(""); setMatricola(""); setEmail("");
-        setIdLivello(""); setIdProfilo(""); setIdUo(""); setPassword("");
+        setIdLivello(""); setIdArea(""); setIdRuolo(""); setIdProfilo(""); setPassword("");
     };
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("idlivello");
-        localStorage.removeItem("nome");
+        localStorage.clear();
         navigate("/login");
     };
 
-    // Funzione per eliminare gli utenti
     const handleDeleteUser = async (matricola) => {
         const confirmDelete = window.confirm("Sei sicuro di voler eliminare questo utente?");
         if (!confirmDelete) return;
 
         const token = localStorage.getItem("token");
 
-        console.log(`🗑️ Eliminazione utente con matricola: ${matricola}`);
-
         try {
-            const response = await axios.delete(`http://localhost:5000/delete-user/${matricola}`, {
+            await axios.delete(`http://localhost:5000/delete-user/${matricola}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            console.log("✅ Risposta dal server:", response.data);
             setMessage("✅ Utente eliminato con successo!");
-            fetchUsers(); // Aggiorna la lista utenti dopo l'eliminazione
+            fetchUsers();
+
+            // Nasconde il messaggio dopo 10 secondi
+            setTimeout(() => setMessage(""), 10000);
         } catch (error) {
             console.error("❌ Errore durante l'eliminazione:", error);
             setMessage("❌ Errore durante l'eliminazione dell'utente.");
+
+            // Nasconde il messaggio di errore dopo 10 secondi
+            setTimeout(() => setMessage(""), 10000);
         }
+    };
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault();
+        setMessage("");
+
+        const token = localStorage.getItem("token");
+
+        try {
+            await axios.put(`http://localhost:5000/update-user/${matricola}`, {
+                nome, cognome, email, idlivello, idarea, idruolo, idprofilo
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setMessage("✅ Utente aggiornato con successo!");
+            fetchUsers(); // Aggiorna la lista utenti
+            setEditMode(false); // Nasconde il modulo di modifica
+
+            setTimeout(() => setMessage(""), 5000);
+        } catch (error) {
+            console.error("❌ Errore durante l'aggiornamento:", error);
+            setMessage("❌ Errore durante l'aggiornamento dell'utente.");
+        }
+    };
+
+    const openEditUser = (user) => {
+        console.log("📝 Modifica utente selezionato:", user); // Debug per vedere i dati ricevuti
+        setSelectedUser(user);
+        setNome(user.nome);
+        setCognome(user.cognome);
+        setMatricola(user.matricola);
+        setEmail(user.email);
+        setIdLivello(user.idlivello);
+        setIdArea(user.idarea); // ✅ Area corretta
+        setIdRuolo(user.idruolo); // ✅ Ruolo ora è selezionato correttamente
+        setIdProfilo(user.idprofilo); // ✅ Profilo ora è selezionato correttamente
+        setActiveSection("edit");
     };
 
     return (
@@ -139,7 +208,6 @@ const AdminDashboard = () => {
                     <button onClick={handleLogout} className="logout-btn">Logout</button>
                 </aside>
 
-
                 <main className="main-content">
                     {activeSection === "register" && (
                         <div className="register-panel">
@@ -148,6 +216,57 @@ const AdminDashboard = () => {
                                 <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
                                 <input type="text" placeholder="Cognome" value={cognome} onChange={(e) => setCognome(e.target.value)} required />
                                 <input type="text" placeholder="Matricola" value={matricola} onChange={(e) => setMatricola(e.target.value)} required />
+
+                                <select value={idlivello} onChange={(e) => setIdLivello(e.target.value)} required>
+                                    <option value="">Seleziona Livello</option>
+                                    <option value="0">SuperAdmin</option>
+                                    <option value="1">Admin</option>
+                                    <option value="2">User</option>
+                                </select>
+
+                                <select value={idarea} onChange={(e) => setIdArea(e.target.value)} required>
+                                    <option value="">Seleziona Area</option>
+                                    {aree.map(area => <option key={area.id} value={area.id}>{area.descrizione}</option>)}
+                                </select>
+
+                                <select value={idruolo} onChange={(e) => setIdRuolo(e.target.value)} required>
+                                    <option value="">Seleziona Ruolo</option>
+                                    {ruoli.map(ruolo => (
+                                        <option key={ruolo.id} value={ruolo.id}>
+                                            {ruolo.descrizione}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select value={idprofilo} onChange={(e) => setIdProfilo(e.target.value)} required>
+                                    <option value="">Seleziona Profilo</option>
+                                    {profili.map(profilo => (
+                                        <option key={profilo.id} value={profilo.id}>
+                                            {profilo.descrizione}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+
+                                <button type="submit" onClick={() => console.log("✅ Pulsante Registra Utente premuto!")}>
+                                    Registra Utente
+                                </button>
+
+                                <button type="button" className="cancel-btn" onClick={handleCancel}>Annulla</button>
+                            </form>
+                        </div>
+                    )}
+
+                    {editMode && selectedUser && (
+                        <div className="register-panel">
+                            <h3>Modifica Utente</h3>
+                            <form onSubmit={handleUpdateUser}>
+                                <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+                                <input type="text" placeholder="Cognome" value={cognome} onChange={(e) => setCognome(e.target.value)} required />
+                                <input type="text" placeholder="Matricola" value={matricola} disabled />
+
                                 <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
                                 <select value={idlivello} onChange={(e) => setIdLivello(e.target.value)} required>
@@ -157,33 +276,36 @@ const AdminDashboard = () => {
                                     <option value="2">User</option>
                                 </select>
 
+                                <select value={idarea} onChange={(e) => setIdArea(e.target.value)} required>
+                                    <option value="">Seleziona Area</option>
+                                    {aree.map(area => (
+                                        <option key={area.id} value={area.id} selected={area.id == idarea}>
+                                            {area.descrizione}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select value={idruolo} onChange={(e) => setIdRuolo(e.target.value)} required>
+                                    <option value="">Seleziona Ruolo</option>
+                                    {ruoli.map(ruolo => (
+                                        <option key={ruolo.id} value={ruolo.id} selected={ruolo.id == idruolo}>
+                                            {ruolo.descrizione}
+                                        </option>
+                                    ))}
+                                </select>
+
                                 <select value={idprofilo} onChange={(e) => setIdProfilo(e.target.value)} required>
                                     <option value="">Seleziona Profilo</option>
-                                    {profili.map(profilo => <option key={profilo.id} value={profilo.id}>{profilo.descrizione}</option>)}
+                                    {profili.map(profilo => (
+                                        <option key={profilo.id} value={profilo.id} selected={profilo.id == idprofilo}>
+                                            {profilo.descrizione}
+                                        </option>
+                                    ))}
                                 </select>
 
-                                {/* Controlla che il valore venga aggiornato */}
-                                <select value={idruolo} onChange={(e) => {
-                                    setIdRuolo(e.target.value);
-                                    console.log("Selezionato Ruolo:", e.target.value); // Debug
-                                }} required>
-                                    <option value="">Seleziona Ruolo</option>
-                                    {ruoli.map(ruolo => <option key={ruolo.id} value={ruolo.id}>{ruolo.descrizione}</option>)}
-                                </select>
-
-                                <select value={idarea} onChange={(e) => {
-                                    setIdArea(e.target.value);
-                                    console.log("Selezionata Area:", e.target.value); // Debug
-                                }} required>
-                                    <option value="">Seleziona Area</option>
-                                    {aree.map(area => <option key={area.id} value={area.id}>{area.descrizione}</option>)}
-                                </select>
-
-                                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-
-                                <button type="submit">Registra Utente</button>
+                                <button type="submit">Aggiorna Utente</button>
+                                <button type="button" className="cancel-btn" onClick={() => setEditMode(false)}>Annulla</button>
                             </form>
-                            <button className="cancel-btn" onClick={handleCancel}>Annulla</button>
                         </div>
                     )}
 
@@ -198,6 +320,9 @@ const AdminDashboard = () => {
                                         <th>Cognome</th>
                                         <th>Email</th>
                                         <th>Livello</th>
+                                        <th>Area</th>
+                                        <th>Ruolo</th>
+                                        <th>Profilo</th>
                                         <th>Azioni</th>
                                     </tr>
                                 </thead>
@@ -214,7 +339,16 @@ const AdminDashboard = () => {
                                                         : user.idlivello === 1 ? "Admin"
                                                             : "User"}
                                                 </td>
+                                                <td>{user.area}</td>
+                                                <td>{user.ruolo}</td>
+                                                <td>{user.profilo}</td>
                                                 <td>
+                                                    {/* Pulsante per modificare l'utente */}
+                                                    <button className="edit-btn" onClick={() => openEditUser(user)}>
+                                                        ✏️
+                                                    </button>
+
+                                                    {/* Pulsante per eliminare l'utente */}
                                                     <button className="delete-btn" onClick={() => handleDeleteUser(user.matricola)}>
                                                         🗑️
                                                     </button>
@@ -223,16 +357,54 @@ const AdminDashboard = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="6" className="no-data">Nessun utente registrato</td>
+                                            <td colSpan="9" className="no-data">Nessun utente registrato</td>
                                         </tr>
                                     )}
                                 </tbody>
+
                             </table>
                         </div>
                     )}
+
+                    {activeSection === "edit" && (
+                        <div className="edit-panel">
+                            <h3>Modifica Utente</h3>
+                            <p>Stai modificando l'utente: {selectedUser?.nome} {selectedUser?.cognome}</p>
+                            <form onSubmit={handleUpdateUser}>
+                                <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+                                <input type="text" placeholder="Cognome" value={cognome} onChange={(e) => setCognome(e.target.value)} required />
+                                <input type="text" placeholder="Matricola" value={matricola} disabled />
+                                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+
+                                <select value={idarea} onChange={(e) => setIdArea(e.target.value)} required>
+                                    <option value="">Seleziona Area</option>
+                                    {aree.map(area => (
+                                        <option key={area.id} value={area.id}>{area.descrizione}</option>
+                                    ))}
+                                </select>
+
+                                <select value={idruolo} onChange={(e) => setIdRuolo(e.target.value)} required>
+                                    <option value="">Seleziona Ruolo</option>
+                                    {ruoli.map(ruolo => (
+                                        <option key={ruolo.id} value={ruolo.id}>{ruolo.descrizione}</option>
+                                    ))}
+                                </select>
+
+                                <select value={idprofilo} onChange={(e) => setIdProfilo(e.target.value)} required>
+                                    <option value="">Seleziona Profilo</option>
+                                    {profili.map(profilo => (
+                                        <option key={profilo.id} value={profilo.id}>{profilo.descrizione}</option>
+                                    ))}
+                                </select>
+
+                                <button type="submit">Salva Modifiche</button>
+                                <button className="cancel-btn" onClick={() => setActiveSection("")}>Annulla</button>
+                            </form>
+                        </div>
+                    )}
+
+
                 </main>
-
-
 
                 {/* Riquadro dei messaggi sulla destra - visibile solo se c'è un messaggio */}
                 {message && (
@@ -240,6 +412,7 @@ const AdminDashboard = () => {
                         <p className="message">{message}</p>
                     </aside>
                 )}
+
             </div>
         </div>
     );

@@ -45,16 +45,16 @@ app.post("/login", async (req, res) => {
 
         // Genera il token JWT includendo nome e idlivello
         const token = jwt.sign(
-            { id: user.id, matricola: user.matricola, nome: user.nome, idlivello: user.idlivello }, 
-            "your_secret_key", 
-            { expiresIn: "1h" }
+            { id: user.id, matricola: user.matricola, nome: user.nome, idlivello: user.idlivello },
+            "your_secret_key",
+            { expiresIn: "12h" }
         );
 
-        res.json({ 
-            message: "Login effettuato con successo!", 
-            token, 
-            idlivello: user.idlivello, 
-            nome: user.nome 
+        res.json({
+            message: "Login effettuato con successo!",
+            token,
+            idlivello: user.idlivello,
+            nome: user.nome
         });
     });
 });
@@ -64,6 +64,7 @@ app.post("/login", async (req, res) => {
 // **ROUTE: Registrazione con Matricola**
 app.post("/register", async (req, res) => {
     const authHeader = req.headers["authorization"];
+    console.log("📥 Dati ricevuti dal frontend:", req.body);
 
     if (!authHeader) {
         console.error("❌ Token mancante");
@@ -84,6 +85,11 @@ app.post("/register", async (req, res) => {
     }
 
     const { nome, cognome, matricola, email, idlivello, idprofilo, idruolo, idarea, password } = req.body;
+
+    if (!nome || !cognome || !matricola || !email || !idlivello || !idarea || !idruolo || !idprofilo || !password) {
+        console.error("❌ Dati mancanti per la registrazione:", req.body);
+        return res.status(400).json({ error: "Tutti i campi sono obbligatori!" });
+    }
 
     console.log(`📝 Tentativo di registrazione: ${nome} ${cognome} - Matricola: ${matricola}`);
 
@@ -114,12 +120,12 @@ app.post("/register", async (req, res) => {
             try {
                 const hashedPassword = await bcrypt.hash(password, 10);
 
-                // Inseriamo il nuovo utente
-                db.query("INSERT INTO user (nome, cognome, matricola, email, idlivello, idprofilo, idruolo, idarea, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                    [nome, cognome, matricola, email, idlivello, idprofilo, idruolo, idarea, hashedPassword], 
+                db.query(
+                    "INSERT INTO user (nome, cognome, matricola, email, idlivello, idarea, idruolo, idprofilo, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [nome, cognome, matricola, email, idlivello, idarea, idruolo, idprofilo, hashedPassword],
                     (err, result) => {
                         if (err) {
-                            console.error("❌ Errore durante l'inserimento:", err);
+                            console.error("❌ Errore durante l'inserimento nel database:", err);
                             return res.status(500).json({ error: "Errore durante la registrazione" });
                         }
                         console.log("✅ Utente registrato con successo!");
@@ -175,16 +181,50 @@ app.get("/get-aree", (req, res) => {
     });
 });
 
+// API per ottenere i ruoli associati a un'area selezionata
+app.get("/get-ruoli/:idArea", async (req, res) => {
+    const { idArea } = req.params;
+
+    const query = `
+        SELECT DISTINCT r.id, r.descrizione 
+        FROM ruolo r
+        INNER JOIN rel_area_ruolo ar ON r.id = ar.idRuolo
+        WHERE ar.idArea = ?`;
+
+    db.query(query, [idArea], (err, result) => {
+        if (err) {
+            console.error("❌ Errore nel recupero dei ruoli:", err);
+            return res.status(500).json({ error: "Errore nel recupero dei ruoli" });
+        }
+        res.json(result);
+    });
+});
+
+
+// API per ottenere i profili associati a un ruolo selezionato
+app.get("/get-profili/:idRuolo", async (req, res) => {
+    const { idRuolo } = req.params;
+
+    const query = "SELECT id, descrizione FROM profilo WHERE idruolo = ?";
+
+    db.query(query, [idRuolo], (err, result) => {
+        if (err) {
+            console.error("❌ Errore nel recupero dei profili:", err);
+            return res.status(500).json({ error: "Errore nel recupero dei profili" });
+        }
+        console.log("✅ Profili trovati per ruolo", idRuolo, ":", result); // Debug
+        res.json(result);
+    });
+});
+
+
+
 //API per ottenere la lista degli utenti
 app.get("/get-users", async (req, res) => {
     const authHeader = req.headers["authorization"];
-
-    if (!authHeader) {
-        return res.status(401).json({ error: "Token mancante" });
-    }
+    if (!authHeader) return res.status(401).json({ error: "Token mancante" });
 
     const token = authHeader.split(" ")[1];
-
     try {
         const decoded = jwt.verify(token, "your_secret_key");
         if (decoded.idlivello !== 0 && decoded.idlivello !== 1) {
@@ -194,13 +234,45 @@ app.get("/get-users", async (req, res) => {
         return res.status(401).json({ error: "Token non valido" });
     }
 
-    db.query("SELECT matricola, nome, cognome, email, idlivello FROM user", (err, result) => {
+    // Query aggiornata per ottenere ID e Descrizione di Area, Ruolo e Profilo
+    const query = `
+SELECT DISTINCT
+    user.matricola, user.nome, user.cognome, user.email, user.idlivello,
+    profilo.id AS idprofilo, profilo.descrizione AS profilo,
+    ruolo.id AS idruolo, ruolo.descrizione AS ruolo,
+    area.id AS idarea, area.descrizione AS area
+FROM user
+LEFT JOIN profilo ON user.idprofilo = profilo.id
+LEFT JOIN ruolo ON profilo.idruolo = ruolo.id
+LEFT JOIN area ON user.idarea = area.id;
+        `;
+
+    db.query(query, (err, result) => {
         if (err) {
-            console.error("Errore MySQL:", err); // Debug errore MySQL
+            console.error("❌ Errore MySQL:", err);
             return res.status(500).json({ error: "Errore nel recupero utenti" });
         }
-        console.log("Utenti trovati:", result); // Debug utenti trovati
+        console.log("✅ Risultati utenti:", result); // Debug per controllare l'output
         res.json(result);
+    });
+});
+
+//API per aggiornare l'utente nel database
+app.put("/update-user/:matricola", async (req, res) => {
+    const { nome, cognome, email, idlivello, idarea, idruolo, idprofilo } = req.body;
+    const { matricola } = req.params;
+
+    const query = `
+        UPDATE user 
+        SET nome = ?, cognome = ?, email = ?, idlivello = ?, idarea = ?, idruolo = ?, idprofilo = ?
+        WHERE matricola = ?`;
+
+    db.query(query, [nome, cognome, email, idlivello, idarea, idruolo, idprofilo, matricola], (err, result) => {
+        if (err) {
+            console.error("❌ Errore durante l'aggiornamento:", err);
+            return res.status(500).json({ error: "Errore durante l'aggiornamento dell'utente" });
+        }
+        res.json({ message: "✅ Utente aggiornato con successo!" });
     });
 });
 
