@@ -50,17 +50,15 @@ function App() {
                 <main className="content"> {/* Contenitore principale del contenuto */}
                   <Topbar setIsSidebar={setIsSidebar} /> {/* Renderizza la barra superiore */}
                   <Routes> {/* Definisce le rotte dell'applicazione */}
-                    {/* Rotte accessibili a tutti gli utenti autenticati */}
-                    <Route path="/" element={<Dashboard />} /> 
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/team" element={<Team />} />
-                    <Route path="/contacts" element={<Contacts />} />
-                    <Route path="/invoices" element={<Invoices />} />
-                    <Route path="/form" element={<Form />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/bar" element={<Bar />} />
-                    <Route path="/pie" element={<Pie />} />
-                    <Route path="/line" element={<Line />} />
+                    {/* Rotte protette */}
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <PrivateRoute allowedRoles={["admin", "user"]}>
+                          <Dashboard />
+                        </PrivateRoute>
+                      }
+                    />
                     <Route
                       path="/admin"
                       element={
@@ -85,6 +83,16 @@ function App() {
                         </PrivateRoute>
                       }
                     />
+
+                    {/* Altre rotte */}
+                    <Route path="/team" element={<Team />} />
+                    <Route path="/contacts" element={<Contacts />} />
+                    <Route path="/invoices" element={<Invoices />} />
+                    <Route path="/form" element={<Form />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/bar" element={<Bar />} />
+                    <Route path="/pie" element={<Pie />} />
+                    <Route path="/line" element={<Line />} />
                   </Routes>
                 </main>
               </>
